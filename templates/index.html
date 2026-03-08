@@ -1,0 +1,2185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Essay Writer — AI Multi-Agent</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&family=Manrope:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    /* ── RESET & TOKENS ─────────────────────────────────── */
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --ink: #0e0e10;
+      --paper: #f5f2ec;
+      --cream: #ede9e0;
+      --mist: #d8d3c8;
+      --warm: #b8b0a0;
+      --dim: #7a7268;
+      --accent: #1a1a2e;
+      --gold: #c9a84c;
+      --gold2: #e8c87a;
+      --sage: #4a7c59;
+      --rust: #b85c38;
+      --surface: #fff;
+      --border: rgba(0, 0, 0, 0.08);
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.05);
+      --r: 12px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    /* ── SCROLLBAR ──────────────────────────────────────── */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--mist);
+      border-radius: 2px;
+    }
+
+    /* ── LAYOUT ─────────────────────────────────────────── */
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    /* ── TOP BAR ────────────────────────────────────────── */
+    header {
+      background: var(--ink);
+      color: var(--paper);
+      padding: 0 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: 'Instrument Serif', serif;
+      font-size: 22px;
+      font-style: italic;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo span {
+      color: var(--gold);
+    }
+
+    .logo-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-style: normal;
+      color: var(--dim);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 2px 8px;
+      border-radius: 3px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-pill {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--dim);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.3s;
+    }
+
+    .status-pill.running {
+      color: var(--gold2);
+      border-color: rgba(201, 168, 76, 0.3);
+    }
+
+    .status-pill.paused {
+      color: #7ec8a0;
+      border-color: rgba(126, 200, 160, 0.3);
+    }
+
+    .status-pill.done {
+      color: #7ec8a0;
+      border-color: rgba(126, 200, 160, 0.3);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-dot.pulse {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.3
+      }
+    }
+
+    /* ── MAIN SPLIT ─────────────────────────────────────── */
+    .main {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      height: calc(100vh - 56px);
+      overflow: hidden;
+    }
+
+    /* ── LEFT PANEL ─────────────────────────────────────── */
+    .left {
+      background: var(--cream);
+      border-right: 1px solid var(--mist);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── FORM AREA ──────────────────────────────────────── */
+    .form-area {
+      padding: 28px 28px 20px;
+      border-bottom: 1px solid var(--mist);
+      flex-shrink: 0;
+    }
+
+    .form-area h2 {
+      font-family: 'Instrument Serif', serif;
+      font-size: 26px;
+      font-weight: 400;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      color: var(--ink);
+    }
+
+    .form-area h2 em {
+      font-style: italic;
+      color: var(--dim);
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 7px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    textarea,
+    input[type="number"] {
+      width: 100%;
+      background: var(--surface);
+      border: 1.5px solid var(--mist);
+      border-radius: var(--r);
+      padding: 12px 14px;
+      font-family: 'Manrope', sans-serif;
+      font-size: 14px;
+      color: var(--ink);
+      transition: border-color 0.2s;
+      resize: none;
+      outline: none;
+    }
+
+    textarea:focus,
+    input:focus {
+      border-color: var(--gold);
+    }
+
+    textarea {
+      height: 100px;
+      line-height: 1.6;
+    }
+
+    input[type="number"] {
+      width: 80px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .row label {
+      white-space: nowrap;
+    }
+
+    .btn-start {
+      width: 100%;
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      border-radius: var(--r);
+      padding: 13px 20px;
+      font-family: 'Manrope', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .btn-start:hover {
+      background: #2a2a40;
+    }
+
+    .btn-start:active {
+      transform: scale(0.98);
+    }
+
+    .btn-start:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── PIPELINE TRACKER ───────────────────────────────── */
+    .pipeline {
+      padding: 20px 28px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .pipeline h3 {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--warm);
+      margin-bottom: 18px;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 6px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      transition: background 0.2s;
+      position: relative;
+    }
+
+    .step::before {
+      content: '';
+      position: absolute;
+      left: 23px;
+      top: 36px;
+      bottom: -14px;
+      width: 1px;
+      background: var(--mist);
+    }
+
+    .step:last-child::before {
+      display: none;
+    }
+
+    .step.active {
+      background: rgba(201, 168, 76, 0.08);
+    }
+
+    .step.done {
+      opacity: 1;
+    }
+
+    .step.pending {
+      opacity: 0.4;
+    }
+
+    .step.hitl {
+      background: rgba(74, 124, 89, 0.08);
+    }
+
+    .step-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1.5px solid var(--mist);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+      transition: all 0.3s;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step.active .step-icon {
+      border-color: var(--gold);
+      background: rgba(201, 168, 76, 0.1);
+      animation: spin-glow 2s linear infinite;
+    }
+
+    .step.done .step-icon {
+      border-color: var(--sage);
+      background: rgba(74, 124, 89, 0.1);
+    }
+
+    .step.hitl .step-icon {
+      border-color: var(--sage);
+      background: rgba(74, 124, 89, 0.15);
+    }
+
+    @keyframes spin-glow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.1);
+      }
+
+      50% {
+        box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.25);
+      }
+    }
+
+    .step-body {
+      flex: 1;
+      padding-top: 4px;
+    }
+
+    .step-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 1px;
+    }
+
+    .step-desc {
+      font-size: 12px;
+      color: var(--dim);
+      line-height: 1.5;
+    }
+
+    /* ── HITL PANEL ─────────────────────────────────────── */
+    .hitl-panel {
+      display: none;
+      margin: 0 20px 20px;
+      background: var(--surface);
+      border: 1.5px solid rgba(74, 124, 89, 0.3);
+      border-radius: var(--r);
+      padding: 18px;
+      flex-shrink: 0;
+    }
+
+    .hitl-panel.show {
+      display: block;
+    }
+
+    .hitl-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--sage);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .hitl-panel textarea {
+      height: 80px;
+      font-size: 13px;
+      margin-bottom: 10px;
+      border-color: rgba(74, 124, 89, 0.2);
+    }
+
+    .hitl-panel textarea:focus {
+      border-color: var(--sage);
+    }
+
+    .hitl-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn-sm {
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-family: 'Manrope', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1.5px solid;
+      transition: all 0.15s;
+    }
+
+    .btn-approve {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+    }
+
+    .btn-approve:hover {
+      background: #2a2a40;
+    }
+
+    .btn-skip {
+      background: transparent;
+      color: var(--dim);
+      border-color: var(--mist);
+    }
+
+    .btn-skip:hover {
+      border-color: var(--warm);
+      color: var(--ink);
+    }
+
+    /* ── RIGHT PANEL ────────────────────────────────────── */
+    .right {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    /* ── TABS ────────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--mist);
+      padding: 0 32px;
+      background: var(--surface);
+      gap: 2px;
+    }
+
+    .tab {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 14px 16px 12px;
+      cursor: pointer;
+      color: var(--warm);
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      margin-bottom: -1px;
+    }
+
+    .tab:hover {
+      color: var(--ink);
+    }
+
+    .tab.active {
+      color: var(--ink);
+      border-bottom-color: var(--ink);
+    }
+
+    .tab .badge {
+      display: inline-block;
+      background: var(--gold);
+      color: #fff;
+      font-size: 9px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 16px;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+
+    /* ── TAB PANES ──────────────────────────────────────── */
+    .panes {
+      overflow: hidden;
+      position: relative;
+    }
+
+    .pane {
+      display: none;
+      height: 100%;
+      overflow-y: auto;
+      padding: 32px;
+    }
+
+    .pane.active {
+      display: block;
+    }
+
+    /* ── WELCOME / IDLE ─────────────────────────────────── */
+    .idle-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      gap: 16px;
+      color: var(--warm);
+      padding: 40px;
+    }
+
+    .idle-icon {
+      font-size: 64px;
+      opacity: 0.4;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-8px)
+      }
+    }
+
+    .idle-state h3 {
+      font-family: 'Instrument Serif', serif;
+      font-size: 24px;
+      font-weight: 400;
+      font-style: italic;
+      color: var(--dim);
+    }
+
+    .idle-state p {
+      font-size: 14px;
+      max-width: 320px;
+      line-height: 1.7;
+    }
+
+    /* ── CONTENT CARDS ──────────────────────────────────── */
+    .content-card {
+      background: var(--cream);
+      border: 1px solid var(--mist);
+      border-radius: var(--r);
+      margin-bottom: 20px;
+      overflow: hidden;
+      animation: slide-in 0.4s ease;
+    }
+
+    @keyframes slide-in {
+      from {
+        opacity: 0;
+        transform: translateY(10px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .content-card-header {
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--mist);
+      background: rgba(0, 0, 0, 0.02);
+    }
+
+    .content-card-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--dim);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .content-card-body {
+      padding: 18px;
+      font-size: 14px;
+      line-height: 1.85;
+      color: var(--ink);
+      white-space: pre-wrap;
+      font-family: 'Manrope', sans-serif;
+    }
+
+    /* ── ESSAY DISPLAY ──────────────────────────────────── */
+    .essay-wrap {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .essay-header {
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--mist);
+    }
+
+    .essay-topic {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 10px;
+    }
+
+    .essay-title {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(24px, 3vw, 38px);
+      font-weight: 400;
+      line-height: 1.2;
+      color: var(--ink);
+    }
+
+    .essay-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .essay-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      padding: 3px 10px;
+      border-radius: 3px;
+      background: var(--cream);
+      border: 1px solid var(--mist);
+      color: var(--dim);
+    }
+
+    .essay-body {
+      font-family: 'Instrument Serif', serif;
+      font-size: 17px;
+      line-height: 1.9;
+      color: #1a1a1a;
+    }
+
+    .essay-body p {
+      margin-bottom: 20px;
+    }
+
+    /* ── ESSAY ACTIONS ──────────────────────────────────── */
+    .essay-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--mist);
+    }
+
+    .btn-action {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-family: 'Manrope', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1.5px solid;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .btn-copy {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+    }
+
+    .btn-copy:hover {
+      background: #2a2a40;
+    }
+
+    .btn-download {
+      background: transparent;
+      color: var(--dim);
+      border-color: var(--mist);
+    }
+
+    .btn-download:hover {
+      border-color: var(--ink);
+      color: var(--ink);
+    }
+
+    /* ── CRITIQUE TAB ───────────────────────────────────── */
+    .critique-text {
+      font-size: 14px;
+      line-height: 1.85;
+      color: var(--ink);
+      white-space: pre-wrap;
+      max-width: 700px;
+    }
+
+    /* ── LIVE LOG ───────────────────────────────────────── */
+    .log-feed {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    .log-entry {
+      display: flex;
+      gap: 14px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+      animation: fade-in 0.3s ease;
+    }
+
+    @keyframes fade-in {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    .log-time {
+      color: var(--warm);
+      min-width: 50px;
+    }
+
+    .log-node {
+      min-width: 80px;
+    }
+
+    .log-node.plan {
+      color: #7b68ee;
+    }
+
+    .log-node.research {
+      color: var(--gold);
+    }
+
+    .log-node.draft {
+      color: var(--sage);
+    }
+
+    .log-node.critique {
+      color: var(--rust);
+    }
+
+    .log-node.revision {
+      color: #4a90d9;
+    }
+
+    .log-node.final {
+      color: var(--sage);
+    }
+
+    .log-node.system {
+      color: var(--dim);
+    }
+
+    .log-msg {
+      color: var(--dim);
+    }
+
+    .log-msg.highlight {
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    /* ── EMPTY STATES ───────────────────────────────────── */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--warm);
+      font-size: 14px;
+    }
+
+    .empty-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+      opacity: 0.4;
+    }
+
+    /* ── TOAST ──────────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--ink);
+      color: var(--paper);
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 999;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* ── RESPONSIVE ─────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+
+      .left {
+        max-height: 60vh;
+        border-right: none;
+        border-bottom: 1px solid var(--mist);
+      }
+    }
+
+    /* ── PLAN RENDERED ──────────────────────────────────── */
+    .plan-block {
+      margin-bottom: 28px;
+    }
+
+    .plan-title {
+      font-family: 'Instrument Serif', serif;
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--ink);
+      margin-bottom: 6px;
+      line-height: 1.25;
+    }
+
+    .plan-thesis {
+      background: rgba(201, 168, 76, 0.08);
+      border-left: 3px solid var(--gold);
+      padding: 14px 18px;
+      border-radius: 0 8px 8px 0;
+      margin: 18px 0 24px;
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--ink);
+      font-style: italic;
+    }
+
+    .plan-section {
+      margin-bottom: 20px;
+      border: 1px solid var(--mist);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .plan-section-header {
+      background: var(--cream);
+      padding: 11px 16px;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--ink);
+      border-bottom: 1px solid var(--mist);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .plan-section-num {
+      width: 22px;
+      height: 22px;
+      background: var(--ink);
+      color: var(--paper);
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .plan-bullet-list {
+      padding: 10px 16px 12px 16px;
+      list-style: none;
+    }
+
+    .plan-bullet-list li {
+      padding: 5px 0 5px 20px;
+      font-size: 14px;
+      color: #4a4640;
+      line-height: 1.65;
+      position: relative;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    .plan-bullet-list li:last-child {
+      border-bottom: none;
+    }
+
+    .plan-bullet-list li::before {
+      content: '›';
+      position: absolute;
+      left: 4px;
+      color: var(--gold);
+      font-weight: 700;
+    }
+
+    .plan-sub-list {
+      margin: 4px 0 4px 16px;
+      list-style: none;
+    }
+
+    .plan-sub-list li {
+      padding: 3px 0 3px 16px;
+      font-size: 13px;
+      color: var(--dim);
+      border: none !important;
+    }
+
+    .plan-sub-list li::before {
+      content: '+';
+      color: var(--sage);
+      left: 2px;
+    }
+
+    /* ── RESEARCH CARDS ─────────────────────────────────── */
+    .research-source {
+      border: 1px solid var(--mist);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+
+    .research-source:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .research-source-header {
+      background: var(--cream);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--mist);
+    }
+
+    .research-source-num {
+      width: 26px;
+      height: 26px;
+      background: var(--ink);
+      color: var(--paper);
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Mono', monospace;
+      flex-shrink: 0;
+    }
+
+    .research-source-meta {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .research-source-query {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+
+    .research-source-url {
+      font-size: 12px;
+      color: #4a7fc1;
+      text-decoration: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .research-source-url:hover {
+      text-decoration: underline;
+    }
+
+    .research-source-body {
+      padding: 14px 16px;
+      font-size: 14px;
+      line-height: 1.8;
+      color: #3a3630;
+    }
+
+    /* ── CRITIQUE CARDS ─────────────────────────────────── */
+    .critique-summary {
+      background: rgba(184, 92, 56, 0.06);
+      border-left: 3px solid var(--rust);
+      border-radius: 0 10px 10px 0;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--ink);
+    }
+
+    .critique-summary-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--rust);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .critique-issues-header {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 14px;
+    }
+
+    .critique-issue {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 12px;
+      border: 1px solid var(--mist);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+
+    .critique-issue:hover {
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+    }
+
+    .critique-issue-num {
+      width: 44px;
+      background: var(--ink);
+      color: var(--paper);
+      font-family: 'DM Mono', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .critique-issue-body {
+      padding: 14px 16px;
+      flex: 1;
+    }
+
+    .critique-issue-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 6px;
+      letter-spacing: 0.1px;
+    }
+
+    .critique-issue-text {
+      font-size: 14px;
+      line-height: 1.75;
+      color: #4a4640;
+    }
+
+    .critique-suggestion {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(74, 124, 89, 0.07);
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--sage);
+      line-height: 1.6;
+    }
+
+    .critique-suggestion::before {
+      content: "💡 Suggestion: ";
+      font-weight: 700;
+    }
+
+    /* ── PLAN FIXES ─────────────────────────────────────── */
+    .plan-roman-header {
+      font-family: 'Instrument Serif', serif;
+      font-size: 17px;
+      font-weight: 400;
+      color: var(--ink);
+      padding: 12px 16px;
+      background: var(--cream);
+      border-bottom: 1px solid var(--mist);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .plan-roman-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      background: var(--ink);
+      color: var(--paper);
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    }
+
+    .plan-evidence-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--dim);
+      padding: 8px 16px 4px;
+      border-top: 1px dashed var(--mist);
+      margin-top: 4px;
+    }
+
+    .plan-evidence-item {
+      padding: 4px 16px 4px 28px;
+      font-size: 13px;
+      color: var(--dim);
+      position: relative;
+      line-height: 1.6;
+    }
+
+    .plan-evidence-item::before {
+      content: "+";
+      position: absolute;
+      left: 14px;
+      color: var(--sage);
+      font-weight: 700;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <!-- HEADER -->
+    <header>
+      <div class="logo">
+        Essay<span>Writer</span>
+        <span class="logo-tag">AI · LangGraph</span>
+      </div>
+      <div class="header-right">
+        <button onclick="toggleHistory()" id="historyBtn" title="View saved essays"
+          style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:#7a7a8a;font-family:DM Mono,monospace;font-size:11px;padding:5px 14px;border-radius:6px;cursor:pointer;letter-spacing:0.5px;transition:all .2s"
+          onmouseover="this.style.color='#ddd'" onmouseout="this.style.color='#7a7a8a'">📚 History</button>
+        <button onclick="loadCurrentState()"
+          title="Fetch current essay from server (use if screen is blank after skipping)"
+          style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:#7a7a8a;font-family:DM Mono,monospace;font-size:11px;padding:5px 14px;border-radius:6px;cursor:pointer;letter-spacing:0.5px;transition:all .2s"
+          onmouseover="this.style.color='#ddd'" onmouseout="this.style.color='#7a7a8a'">↻ Load Result</button>
+        <div class="status-pill" id="statusPill">
+          <span class="status-dot"></span>
+          <span id="statusText">Ready</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN -->
+    <div class="main">
+
+      <!-- LEFT: Form + Pipeline Tracker -->
+      <aside class="left">
+
+        <!-- Input Form -->
+        <div class="form-area">
+          <h2>Write an <em>essay</em><br>with AI agents</h2>
+
+          <div class="field">
+            <label>Essay Topic</label>
+            <textarea id="topicInput"
+              placeholder="e.g. The impact of artificial intelligence on employment…"></textarea>
+          </div>
+
+          <div class="field">
+            <div class="row">
+              <label>Revision Cycles</label>
+              <input type="number" id="maxRevInput" value="2" min="1" max="5">
+            </div>
+          </div>
+
+          <button class="btn-start" id="startBtn" onclick="startEssay()">
+            <span>✦</span> Start Writing
+          </button>
+        </div>
+
+        <!-- Pipeline Steps -->
+        <div class="pipeline">
+          <h3>Pipeline</h3>
+
+          <div class="step pending" id="step-plan">
+            <div class="step-icon">📋</div>
+            <div class="step-body">
+              <div class="step-name">Planner</div>
+              <div class="step-desc">Creates a structured outline</div>
+            </div>
+          </div>
+
+          <div class="step pending" id="step-research">
+            <div class="step-icon">🔍</div>
+            <div class="step-body">
+              <div class="step-name">Researcher</div>
+              <div class="step-desc">Searches the web (Tavily)</div>
+            </div>
+          </div>
+
+          <div class="step pending" id="step-draft">
+            <div class="step-icon">✍️</div>
+            <div class="step-body">
+              <div class="step-name">Writer</div>
+              <div class="step-desc">Writes the full essay</div>
+            </div>
+          </div>
+
+          <div class="step pending" id="step-critique">
+            <div class="step-icon">🧐</div>
+            <div class="step-body">
+              <div class="step-name">Critic</div>
+              <div class="step-desc">Reviews and finds flaws</div>
+            </div>
+          </div>
+
+          <div class="step pending" id="step-revision">
+            <div class="step-icon">✏️</div>
+            <div class="step-body">
+              <div class="step-name">Reviser</div>
+              <div class="step-desc">Improves the essay</div>
+            </div>
+          </div>
+
+          <div class="step pending" id="step-final">
+            <div class="step-icon">✨</div>
+            <div class="step-body">
+              <div class="step-name">Finaliser</div>
+              <div class="step-desc">Final polish pass</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Human-in-the-Loop panel -->
+        <div class="hitl-panel" id="hitlPanel">
+          <div class="hitl-title">
+            <span>👤</span> Your Review
+          </div>
+          <textarea id="feedbackInput"
+            placeholder="Optional: add your own feedback for the next revision… (or leave blank to accept)"></textarea>
+          <div class="hitl-btns">
+            <button class="btn-sm btn-approve" onclick="submitFeedback()">✓ Approve &amp; Revise</button>
+            <button class="btn-sm btn-skip" onclick="skipRevision()">→ Skip to Final</button>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- RIGHT: Output Panels -->
+      <main class="right">
+
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab('essay')" id="tab-essay">Essay</button>
+          <button class="tab" onclick="switchTab('plan')" id="tab-plan">Plan</button>
+          <button class="tab" onclick="switchTab('research')" id="tab-research">Research</button>
+          <button class="tab" onclick="switchTab('critique')" id="tab-critique">Critique <span class="badge"
+              id="critiqueBadge" style="display:none">!</span></button>
+          <button class="tab" onclick="switchTab('log')" id="tab-log">Live Log</button>
+        </div>
+
+        <!-- Panes -->
+        <div class="panes">
+
+          <!-- ESSAY -->
+          <div class="pane active" id="pane-essay">
+            <div class="idle-state" id="essayIdle">
+              <div class="idle-icon">📝</div>
+              <h3>Your essay will appear here</h3>
+              <p>Fill in a topic on the left and click <strong>Start Writing</strong> to begin.</p>
+            </div>
+            <div class="essay-wrap" id="essayContent" style="display:none">
+              <div class="essay-header">
+                <div class="essay-topic">Essay</div>
+                <div class="essay-title" id="essayTitle"></div>
+                <div class="essay-meta">
+                  <span class="essay-badge" id="revBadge">Draft 0</span>
+                  <span class="essay-badge" id="wordBadge">0 words</span>
+                </div>
+              </div>
+              <div class="essay-body" id="essayBody"></div>
+              <div class="essay-actions" id="essayActions" style="display:none">
+                <button class="btn-action btn-copy" onclick="copyEssay()">
+                  <span>⎘</span> Copy Essay
+                </button>
+                <button class="btn-action btn-download" onclick="downloadEssay()" id="downloadBtn">
+                  <span>↓</span> Download .txt
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- PLAN -->
+          <div class="pane" id="pane-plan">
+            <div class="empty" id="planEmpty">
+              <div class="empty-icon">📋</div>
+              <p>Essay outline will appear here after the Planner runs.</p>
+            </div>
+            <div id="planContent" style="display:none;max-width:720px;margin:0 auto;">
+              <div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--mist);">
+                <div
+                  style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:8px;">
+                  Essay Outline</div>
+                <div style="font-size:11px;color:var(--warm);font-family:'DM Mono',monospace;">Generated by the Planner
+                  agent</div>
+              </div>
+              <div id="planBody"></div>
+            </div>
+          </div>
+
+          <!-- RESEARCH -->
+          <div class="pane" id="pane-research">
+            <div class="empty" id="researchEmpty">
+              <div class="empty-icon">🔍</div>
+              <p>Web research results will appear here.</p>
+            </div>
+            <div id="researchContent" style="display:none;max-width:720px;margin:0 auto;">
+              <div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--mist);">
+                <div
+                  style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:8px;">
+                  Web Research</div>
+                <div style="font-size:11px;color:var(--warm);font-family:'DM Mono',monospace;">Sources gathered by the
+                  Researcher agent via Tavily</div>
+              </div>
+              <div id="researchBody"></div>
+            </div>
+          </div>
+
+          <!-- CRITIQUE -->
+          <div class="pane" id="pane-critique">
+            <div class="empty" id="critiqueEmpty">
+              <div class="empty-icon">🧐</div>
+              <p>The Critic's feedback will appear here after the first draft.</p>
+            </div>
+            <div id="critiqueContent" style="display:none;max-width:720px;margin:0 auto;">
+              <div style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--mist);">
+                <div
+                  style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:4px;">
+                  Critic's Report</div>
+                <div style="font-size:11px;color:var(--warm);font-family:'DM Mono',monospace;">Generated by the Critic
+                  agent — actionable feedback for improvement</div>
+              </div>
+              <div id="critiqueBody"></div>
+            </div>
+          </div>
+
+          <!-- LIVE LOG -->
+          <div class="pane" id="pane-log">
+            <div class="log-feed" id="logFeed">
+              <div class="empty">
+                <div class="empty-icon">📡</div>
+                <p>Live agent activity will stream here.</p>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /panes -->
+      </main>
+
+    </div><!-- /main -->
+  </div><!-- /app -->
+
+  <!-- History Drawer -->
+  <div id="historyDrawer" style="
+  position:fixed;top:56px;right:0;bottom:0;width:380px;
+  background:var(--surface);border-left:1px solid var(--mist);
+  z-index:150;transform:translateX(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  display:flex;flex-direction:column;box-shadow:-8px 0 32px rgba(0,0,0,0.1);
+">
+    <div
+      style="padding:20px 24px 16px;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div>
+        <div
+          style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:4px;">
+          Saved Essays</div>
+        <div style="font-family:'Instrument Serif',serif;font-size:20px;font-style:italic;color:var(--ink);">Your
+          History</div>
+      </div>
+      <button onclick="toggleHistory()"
+        style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--warm);padding:4px;line-height:1;"
+        title="Close">✕</button>
+    </div>
+    <div style="padding:12px 16px;border-bottom:1px solid var(--mist);flex-shrink:0;">
+      <div style="font-size:12px;color:var(--dim);">Click any essay to view it. Essays are saved automatically when
+        complete.</div>
+    </div>
+    <div id="historyList" style="flex:1;overflow-y:auto;padding:12px;"></div>
+  </div>
+  <!-- History overlay backdrop -->
+  <div id="historyBackdrop" onclick="toggleHistory()" style="
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:140;
+"></div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    /* ── STATE ─────────────────────────────────────────── */
+    let threadId = null;
+    let evtSource = null;
+
+    const NODE_LABELS = {
+      plan: 'Planner',
+      research: 'Researcher',
+      draft: 'Writer',
+      critique: 'Critic',
+      revision: 'Reviser',
+      final: 'Finaliser',
+    };
+
+    /* ── START ─────────────────────────────────────────── */
+    async function startEssay() {
+      const task = document.getElementById('topicInput').value.trim();
+      if (!task) { showToast('Please enter an essay topic'); return; }
+
+      const maxRev = parseInt(document.getElementById('maxRevInput').value) || 2;
+
+      // Reset UI
+      resetUI();
+      setStatus('running', 'Starting…');
+      document.getElementById('startBtn').disabled = true;
+      switchTab('log');
+      logEntry('system', 'system', `Starting essay: "${task}"`);
+
+      try {
+        const res = await fetch('/api/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ task, max_revisions: maxRev })
+        });
+        const data = await res.json();
+        if (data.error) { showToast(data.error); resetForm(); return; }
+
+        threadId = data.thread_id;
+        logEntry('system', 'system', `Session ID: ${threadId}`);
+        connectSSE();
+
+      } catch (e) {
+        showToast('Failed to connect to server: ' + e.message);
+        resetForm();
+      }
+    }
+
+    /* ── SSE STREAM ────────────────────────────────────── */
+    function connectSSE() {
+      if (evtSource) evtSource.close();
+      evtSource = new EventSource(`/api/stream/${threadId}`);
+
+      evtSource.onmessage = (e) => {
+        const ev = JSON.parse(e.data);
+        handleEvent(ev);
+      };
+
+      evtSource.onerror = () => {
+        logEntry('system', 'system', 'Stream disconnected');
+      };
+    }
+
+    function handleEvent(ev) {
+      const t = ev.type;
+
+      if (t === 'connected') {
+        logEntry('system', 'system', 'Connected to agent stream');
+        return;
+      }
+
+      if (t === 'ping') return;
+
+      if (t === 'node_complete') {
+        const node = ev.node;
+        const label = NODE_LABELS[node] || node;
+        markStep(node, 'done');
+        logEntry(node, node, `${label} completed`);
+
+        if (ev.plan) { showPlan(ev.plan); }
+        if (ev.research_snippet) { showResearch(ev.research_snippet); }
+        if (ev.draft) { showEssay(ev.draft, ev.revision); }
+        if (ev.critique) { showCritique(ev.critique); }
+
+        // Mark next step active
+        const next = { plan: 'research', research: 'draft', draft: 'critique', revision: 'critique', critique: 'revision' }[node];
+        if (next) markStep(next, 'active');
+        return;
+      }
+
+      if (t === 'hitl_pause') {
+        evtSource.close();
+        markStep('critique', 'done');
+        showCritique(ev.critique);
+        showEssay(ev.draft, ev.revision);
+        showHITL(ev.revision, ev.maximum);
+        setStatus('paused', `Review ${ev.revision}/${ev.maximum}`);
+        logEntry('system', 'system', `⏸ Paused — human review (revision ${ev.revision}/${ev.maximum})`);
+        switchTab('essay');
+        document.getElementById('critiqueBadge').style.display = 'inline-block';
+        // Fetch full state to populate Plan & Research tabs (SSE events may have been missed)
+        fetchAndPopulateAllTabs();
+        return;
+      }
+
+      if (t === 'resuming') {
+        // SSE already reconnected by submitFeedback/skipRevision — just log it
+        hideHITL();
+        setStatus('running', ev.message || 'Resuming...');
+        logEntry('system', 'system', ev.message || 'Resuming...');
+        return;
+      }
+
+      if (t === 'complete') {
+        evtSource.close();
+        markStep('final', 'done');
+        showEssay(ev.draft, null, ev.task);
+        setStatus('done', 'Complete');
+        logEntry('system', 'system', '✓ Essay complete!');
+        showToast('Essay complete! 🎉');
+        document.getElementById('essayActions').style.display = 'flex';
+        document.getElementById('startBtn').disabled = false;
+        hideHITL();
+        switchTab('essay');
+        return;
+      }
+
+      if (t === 'error') {
+        evtSource.close();
+        setStatus('ready', 'Error');
+        logEntry('system', 'system', '✗ Error: ' + ev.message);
+        showToast('Error: ' + ev.message);
+        document.getElementById('startBtn').disabled = false;
+      }
+    }
+
+    /* ── HITL ──────────────────────────────────────────── */
+    function showHITL(rev, max) {
+      document.getElementById('hitlPanel').classList.add('show');
+      markStep('critique', 'hitl');
+    }
+    function hideHITL() {
+      document.getElementById('hitlPanel').classList.remove('show');
+      document.getElementById('feedbackInput').value = '';
+    }
+
+    async function submitFeedback() {
+      if (!threadId) return;
+      const fb = document.getElementById('feedbackInput').value.trim();
+      hideHITL();
+      markStep('revision', 'active');
+      setStatus('running', 'Revising...');
+      logEntry('system', 'system', fb ? 'Resuming with your feedback...' : 'Resuming revision...');
+      await fetch(`/api/feedback/${threadId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feedback: fb })
+      });
+      connectSSE(); // FIX: reconnect stream (was closed at HITL pause)
+    }
+
+    async function skipRevision() {
+      if (!threadId) return;
+      hideHITL();
+      markStep('final', 'active');
+      setStatus('running', 'Final polish...');
+      logEntry('system', 'system', 'Skipping to final polish...');
+      await fetch(`/api/skip/${threadId}`, { method: 'POST' });
+      connectSSE(); // FIX: reconnect stream (was closed at HITL pause)
+    }
+
+    // Fetch full state and populate ALL tabs (called on HITL pause + Load Result button)
+    async function fetchAndPopulateAllTabs() {
+      if (!threadId) return;
+      try {
+        const res = await fetch(`/api/state/${threadId}`);
+        const data = await res.json();
+        if (data.plan) showPlan(data.plan);
+        if (data.research) showResearch(data.research);
+        if (data.draft) showEssay(data.draft, data.revision_num, data.task);
+        if (data.critique) showCritique(data.critique);
+        return data;
+      } catch (e) { console.error('State fetch failed:', e); }
+    }
+
+    // Load Result button — fetches state and updates UI accordingly
+    async function loadCurrentState() {
+      if (!threadId) { showToast('Start an essay first'); return; }
+      showToast('Loading...');
+      const data = await fetchAndPopulateAllTabs();
+      if (!data) { showToast('Could not load from server'); return; }
+      if (data.status === 'complete') {
+        markStep('final', 'done');
+        setStatus('done', 'Complete');
+        document.getElementById('essayActions').style.display = 'flex';
+        document.getElementById('startBtn').disabled = false;
+        switchTab('essay');
+        showToast('Essay loaded! ✓');
+      } else if (data.status === 'paused') {
+        showToast('Draft loaded — waiting for your review');
+        switchTab('essay');
+      } else if (data.draft) {
+        showToast('Draft loaded — agent still running...');
+        switchTab('essay');
+      } else {
+        showToast('No content yet — agent is still working');
+      }
+    }
+
+    /* ── UI HELPERS ────────────────────────────────────── */
+    function switchTab(name) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      document.getElementById('pane-' + name).classList.add('active');
+      if (name !== 'critique') {
+        document.getElementById('critiqueBadge').style.display = 'none';
+      }
+    }
+
+    function markStep(id, state) {
+      const el = document.getElementById('step-' + id);
+      if (!el) return;
+      el.classList.remove('pending', 'active', 'done', 'hitl');
+      el.classList.add(state);
+      if (state === 'active') {
+        const icon = el.querySelector('.step-icon');
+        // Keep emoji, just animate
+      }
+    }
+
+    function setStatus(state, text) {
+      const pill = document.getElementById('statusPill');
+      const dot = pill.querySelector('.status-dot');
+      const txt = document.getElementById('statusText');
+      pill.className = 'status-pill ' + state;
+      dot.className = 'status-dot' + (state === 'running' ? ' pulse' : '');
+      txt.textContent = text;
+    }
+
+    function showEssay(text, rev, title) {
+      document.getElementById('essayIdle').style.display = 'none';
+      document.getElementById('essayContent').style.display = 'block';
+      if (title) document.getElementById('essayTitle').textContent = title;
+
+      // Format paragraphs
+      const paras = text.split('\n\n').filter(p => p.trim());
+      document.getElementById('essayBody').innerHTML =
+        paras.map(p => `<p>${p.replace(/\n/g, ' ')}</p>`).join('');
+
+      const words = text.split(/\s+/).filter(Boolean).length;
+      if (rev !== null && rev !== undefined)
+        document.getElementById('revBadge').textContent = `Draft ${rev}`;
+      document.getElementById('wordBadge').textContent = `${words} words`;
+    }
+
+    function showPlan(text) {
+      document.getElementById('planEmpty').style.display = 'none';
+      document.getElementById('planContent').style.display = 'block';
+      document.getElementById('planBody').innerHTML = renderPlan(text);
+    }
+
+    function renderPlan(text) {
+      const lines = text.split('\n');
+      let html = '';
+      let sectionOpen = false;
+      let inBulletGroup = false;
+      let bulletBuf = [];
+      let evidenceBuf = [];
+      let inEvidenceMode = false;
+      let sectionCount = 0;
+
+      function flushBullets() {
+        let out = '';
+        if (bulletBuf.length) {
+          out += '<ul class="plan-bullet-list">' + bulletBuf.map(b => `<li>${b}</li>`).join('') + '</ul>';
+          bulletBuf = [];
+        }
+        return out;
+      }
+      function flushEvidence() {
+        let out = '';
+        if (evidenceBuf.length) {
+          out += '<div class="plan-evidence-label">Evidence</div>';
+          out += evidenceBuf.map(e => `<div class="plan-evidence-item">${e}</div>`).join('');
+          evidenceBuf = [];
+        }
+        inEvidenceMode = false;
+        return out;
+      }
+      function closeSection() {
+        let out = flushBullets() + flushEvidence();
+        if (sectionOpen) { out += '</div>'; sectionOpen = false; }
+        return out;
+      }
+
+      for (let i = 0; i < lines.length; i++) {
+        const raw = lines[i];
+        const line = raw.trim();
+        if (!line) { html += flushBullets(); continue; }
+
+        // Strip **bold** markdown
+        const clean = line.replace(/\*\*([^*]+)\*\*/g, '$1');
+
+        // ── Essay Title
+        if (/^essay title[:\s]/i.test(clean) || /^essay title$/i.test(clean)) {
+          html += closeSection();
+          const title = clean.replace(/^essay title[:\s]*/i, '').trim();
+          if (title) html += `<div style="font-family:'Instrument Serif',serif;font-size:30px;font-weight:400;color:var(--ink);margin-bottom:6px;line-height:1.2;">${title}</div>`;
+          continue;
+        }
+
+        // ── Thesis Statement
+        if (/^thesis statement[:\s]/i.test(clean)) {
+          html += closeSection();
+          const thesis = clean.replace(/^thesis statement[:\s]*/i, '').trim();
+          if (thesis) html += `<div class="plan-thesis">${thesis}</div>`;
+          continue;
+        }
+
+        // ── Roman numeral section: I. II. III. IV. V. VI. etc (with optional title)
+        const romanMatch = clean.match(/^(I{1,3}|IV|V|VI{0,3}|IX|X)[\.\)]\s*(.+)/i);
+        if (romanMatch) {
+          html += closeSection();
+          sectionCount++;
+          const romanNum = romanMatch[1].toUpperCase();
+          const heading = romanMatch[2].replace(/\*\*/g, '').trim();
+          html += `<div class="plan-section"><div class="plan-roman-header"><span class="plan-roman-num">${romanNum}</span>${heading}</div>`;
+          sectionOpen = true;
+          inEvidenceMode = false;
+          continue;
+        }
+
+        // ── Numbered section: "1." "2." etc as section headers (only if no roman detected)
+        const numSecMatch = clean.match(/^(\d+)\.\s+(Main Argument|Section|Introduction|Conclusion|Body|Overview).+/i);
+        if (numSecMatch) {
+          html += closeSection();
+          sectionCount++;
+          const heading = clean.replace(/^\d+\.\s*/, '').replace(/\*\*/g, '').trim();
+          html += `<div class="plan-section"><div class="plan-section-header"><span class="plan-section-num">${sectionCount}</span>${heading}</div>`;
+          sectionOpen = true;
+          inEvidenceMode = false;
+          continue;
+        }
+
+        // ── "Evidence:" label line
+        if (/^evidence[:\s]*$/i.test(clean) || /^evidence to strengthen/i.test(clean)) {
+          html += flushBullets();
+          inEvidenceMode = true;
+          continue;
+        }
+
+        // ── Evidence sub-item: lines starting with + or deeply indented
+        if (inEvidenceMode || line.match(/^\+\s/) || (raw.match(/^\s{6,}/) && line.match(/^[*+\-]/))) {
+          const txt = clean.replace(/^[+\-*\s]+/, '').trim();
+          if (txt) evidenceBuf.push(txt);
+          continue;
+        }
+
+        // ── Regular bullet: * or -
+        if (clean.match(/^[*\-]\s+/)) {
+          html += flushEvidence();
+          const txt = clean.replace(/^[*\-]\s+/, '').trim();
+          if (txt) bulletBuf.push(txt);
+          continue;
+        }
+
+        // ── Plain indented line (treat as bullet if inside a section)
+        if (raw.match(/^\s{2,}/) && sectionOpen) {
+          html += flushEvidence();
+          const txt = clean.replace(/^[*\-+\s]+/, '').trim();
+          if (txt) bulletBuf.push(txt);
+          continue;
+        }
+
+        // ── Everything else: paragraph or standalone text
+        html += flushBullets() + flushEvidence();
+        if (sectionOpen) {
+          // treat as a bullet inside the section
+          bulletBuf.push(clean);
+        } else {
+          html += `<p style="font-size:14px;color:var(--ink);line-height:1.75;margin-bottom:10px;">${clean}</p>`;
+        }
+      }
+
+      html += closeSection();
+      return html;
+    }
+
+    function showResearch(text) {
+      document.getElementById('researchEmpty').style.display = 'none';
+      document.getElementById('researchContent').style.display = 'block';
+      document.getElementById('researchBody').innerHTML = renderResearch(text);
+    }
+
+    function renderResearch(text) {
+      // Split by "--- Source N" markers
+      const sourcePattern = /---\s*Source\s*(\d+)\s*\(Query:\s*['"]?([^'")]+)['"]?\)\s*---/g;
+      const parts = text.split(/---\s*Source\s*\d+.*?---/);
+      const headers = [];
+      let m;
+      while ((m = sourcePattern.exec(text)) !== null) {
+        headers.push({ num: m[1], query: m[2].trim() });
+      }
+
+      if (headers.length === 0) {
+        // Fallback: plain display in a card
+        return `<div class="research-source">
+      <div class="research-source-body" style="font-family:'DM Mono',monospace;font-size:13px;">${text.replace(/\n/g, '<br>')}</div>
+    </div>`;
+      }
+
+      let html = '';
+      for (let i = 0; i < headers.length; i++) {
+        const body = (parts[i + 1] || '').trim();
+        // Extract URL
+        const urlMatch = body.match(/URL:\s*(https?:\/\/\S+)/);
+        const url = urlMatch ? urlMatch[1] : '';
+        const content = body.replace(/URL:\s*https?:\/\/\S+\n?/, '').trim();
+        const domain = url ? new URL(url).hostname.replace('www.', '') : '';
+
+        html += `<div class="research-source">
+      <div class="research-source-header">
+        <div class="research-source-num">${headers[i].num}</div>
+        <div class="research-source-meta">
+          <div class="research-source-query">Query: "${headers[i].query}"</div>
+          ${url ? `<a class="research-source-url" href="${url}" target="_blank" rel="noopener">${domain}</a>` : ''}
+        </div>
+      </div>
+      <div class="research-source-body">${content.replace(/\n\n/g, '</p><p>').replace(/\n/g, ' ')}</div>
+    </div>`;
+      }
+      return html;
+    }
+
+    function showCritique(text) {
+      document.getElementById('critiqueEmpty').style.display = 'none';
+      document.getElementById('critiqueContent').style.display = 'block';
+      document.getElementById('critiqueBody').innerHTML = renderCritique(text);
+    }
+
+    function renderCritique(text) {
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+      let html = '';
+      let summaryLines = [];
+      let issues = [];
+      let currentIssue = null;
+      let pastSummary = false;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        // Numbered issue line: starts with "1." "2." etc
+        const numMatch = line.match(/^(\d+)\.\s+(.+)/);
+        if (numMatch) {
+          pastSummary = true;
+          if (currentIssue) issues.push(currentIssue);
+          currentIssue = { num: numMatch[1], text: numMatch[2], extras: [] };
+          continue;
+        }
+        if (currentIssue) {
+          currentIssue.extras.push(line);
+        } else {
+          summaryLines.push(line);
+        }
+      }
+      if (currentIssue) issues.push(currentIssue);
+
+      // Summary block
+      if (summaryLines.length) {
+        const summaryText = summaryLines.join(' ');
+        html += `<div class="critique-summary">
+      <div class="critique-summary-label">Overall Assessment</div>
+      ${summaryText}
+    </div>`;
+      }
+
+      // Issues
+      if (issues.length) {
+        html += `<div class="critique-issues-header">Specific Issues &amp; Suggestions</div>`;
+        for (const issue of issues) {
+          // Try to split into problem vs suggestion at " - " or "consider" or "for example"
+          let title = '';
+          let body = issue.text;
+          let suggestion = '';
+
+          // If issue has a colon introducing a topic name
+          const colonIdx = issue.text.indexOf(' - ');
+          if (colonIdx > 0 && colonIdx < 80) {
+            title = issue.text.slice(0, colonIdx);
+            body = issue.text.slice(colonIdx + 3);
+          }
+
+          // Extract suggestion: anything after "consider" or "for example" or "instead of"
+          const suggestMatch = body.match(/[\.\,]\s*(consider\s.+|instead.+|for example,.+)/i);
+          if (suggestMatch) {
+            suggestion = suggestMatch[1].charAt(0).toUpperCase() + suggestMatch[1].slice(1);
+            body = body.replace(suggestMatch[0], '').trim();
+          }
+          // Also catch extras that look like suggestions
+          if (!suggestion && issue.extras.length) {
+            suggestion = issue.extras.join(' ');
+          }
+
+          html += `<div class="critique-issue">
+        <div class="critique-issue-num">${issue.num}</div>
+        <div class="critique-issue-body">
+          ${title ? `<div class="critique-issue-title">${title}</div>` : ''}
+          <div class="critique-issue-text">${body}</div>
+          ${suggestion ? `<div class="critique-suggestion">${suggestion}</div>` : ''}
+        </div>
+      </div>`;
+        }
+      }
+      return html || `<div class="critique-summary"><div class="critique-summary-label">Feedback</div>${text}</div>`;
+    }
+
+    function logEntry(node, cls, msg) {
+      const feed = document.getElementById('logFeed');
+      // Remove empty state on first entry
+      const empty = feed.querySelector('.empty');
+      if (empty) empty.remove();
+
+      const now = new Date();
+      const time = now.toTimeString().slice(0, 8);
+      const div = document.createElement('div');
+      div.className = 'log-entry';
+      div.innerHTML = `
+    <span class="log-time">${time}</span>
+    <span class="log-node ${cls}">${(NODE_LABELS[node] || node).toUpperCase()}</span>
+    <span class="log-msg ${msg.includes('✓') || msg.includes('complete') ? 'highlight' : ''}">${msg}</span>
+  `;
+      feed.appendChild(div);
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    async function copyEssay() {
+      const text = document.getElementById('essayBody').innerText;
+      await navigator.clipboard.writeText(text);
+      showToast('Copied to clipboard!');
+    }
+
+    async function downloadEssay() {
+      if (!threadId) return;
+      window.location.href = `/api/download/${threadId}`;
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function resetUI() {
+      // Steps
+      ['plan', 'research', 'draft', 'critique', 'revision', 'final'].forEach(s => markStep(s, 'pending'));
+      // Essay
+      document.getElementById('essayIdle').style.display = 'block';
+      document.getElementById('essayContent').style.display = 'none';
+      document.getElementById('essayActions').style.display = 'none';
+      // Other panes
+      document.getElementById('planEmpty').style.display = 'block';
+      document.getElementById('planContent').style.display = 'none';
+      document.getElementById('researchEmpty').style.display = 'block';
+      document.getElementById('researchContent').style.display = 'none';
+      document.getElementById('critiqueEmpty').style.display = 'block';
+      document.getElementById('critiqueContent').style.display = 'none';
+      // Log
+      document.getElementById('logFeed').innerHTML = '';
+      hideHITL();
+    }
+
+    function resetForm() {
+      document.getElementById('startBtn').disabled = false;
+      setStatus('ready', 'Ready');
+    }
+
+    // Mark first step active right after start
+    document.getElementById('startBtn').addEventListener('click', () => {
+      setTimeout(() => markStep('plan', 'active'), 100);
+    });
+
+    /* ── HISTORY ────────────────────────────────────────── */
+    let historyOpen = false;
+
+    function toggleHistory() {
+      historyOpen = !historyOpen;
+      const drawer = document.getElementById('historyDrawer');
+      const backdrop = document.getElementById('historyBackdrop');
+      const btn = document.getElementById('historyBtn');
+      if (historyOpen) {
+        drawer.style.transform = 'translateX(0)';
+        backdrop.style.display = 'block';
+        btn.style.color = '#ddd';
+        loadHistory();
+      } else {
+        drawer.style.transform = 'translateX(100%)';
+        backdrop.style.display = 'none';
+        btn.style.color = '#7a7a8a';
+      }
+    }
+
+    async function loadHistory() {
+      const list = document.getElementById('historyList');
+      list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--warm);font-size:13px;">Loading...</div>';
+      try {
+        const res = await fetch('/api/essays');
+        const data = await res.json();
+        if (!data.length) {
+          list.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--warm);">
+        <div style="font-size:36px;margin-bottom:12px;opacity:0.4">📝</div>
+        <div style="font-family:'Instrument Serif',serif;font-size:18px;font-style:italic;color:var(--dim);margin-bottom:8px;">No essays yet</div>
+        <div style="font-size:13px;">Completed essays will appear here automatically.</div>
+      </div>`;
+          return;
+        }
+        list.innerHTML = data.map(e => `
+      <div id="hcard-${e.thread_id}" style="
+        position:relative;padding:14px 16px;border:1px solid var(--mist);border-radius:10px;
+        margin-bottom:10px;transition:all 0.15s;background:var(--cream);
+      " onmouseover="this.style.borderColor='var(--gold)';this.style.background='rgba(201,168,76,0.06)'"
+         onmouseout="this.style.borderColor='var(--mist)';this.style.background='var(--cream)'">
+        <div onclick="loadHistoryEssay('${e.thread_id}')" style="cursor:pointer;padding-right:28px;">
+          <div style="font-family:'Instrument Serif',serif;font-size:16px;color:var(--ink);margin-bottom:6px;line-height:1.3;">${e.task}</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <span style="font-family:'DM Mono',monospace;font-size:10px;background:var(--surface);border:1px solid var(--mist);padding:2px 8px;border-radius:4px;color:var(--dim);">${e.word_count} words</span>
+            <span style="font-family:'DM Mono',monospace;font-size:10px;background:var(--surface);border:1px solid var(--mist);padding:2px 8px;border-radius:4px;color:var(--dim);">${e.revision_num} revision${e.revision_num !== 1 ? 's' : ''}</span>
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--warm);">${e.saved_at}</span>
+          </div>
+        </div>
+        <button onclick="event.stopPropagation();deleteHistoryEssay('${e.thread_id}')"
+          title="Delete this essay"
+          style="position:absolute;top:10px;right:10px;background:none;border:1px solid transparent;
+                 color:var(--warm);cursor:pointer;font-size:14px;width:26px;height:26px;border-radius:6px;
+                 display:flex;align-items:center;justify-content:center;transition:all 0.15s;line-height:1;"
+          onmouseover="this.style.background='rgba(184,92,56,0.1)';this.style.borderColor='rgba(184,92,56,0.3)';this.style.color='var(--rust)'"
+          onmouseout="this.style.background='none';this.style.borderColor='transparent';this.style.color='var(--warm)'">✕</button>
+      </div>
+    `).join('');
+      } catch (e) {
+        list.innerHTML = '<div style="padding:20px;color:var(--rust);font-size:13px;">Could not load history</div>';
+      }
+    }
+
+    async function loadHistoryEssay(tid) {
+      try {
+        const res = await fetch(`/api/essays/${tid}`);
+        const data = await res.json();
+        if (data.error) { showToast('Essay not found'); return; }
+
+        // Populate essay tab
+        document.getElementById('essayIdle').style.display = 'none';
+        document.getElementById('essayContent').style.display = 'block';
+        showEssay(data.draft, data.revision_num, data.task);
+        document.getElementById('essayActions').style.display = 'flex';
+        // Set thread so download works
+        threadId = data.thread_id;
+
+        // Populate other tabs if available
+        if (data.plan) showPlan(data.plan);
+        if (data.research) showResearch(data.research);
+        if (data.critique) showCritique(data.critique);
+
+        // Update pipeline to show all done
+        ['plan', 'research', 'draft', 'critique', 'revision', 'final'].forEach(s => markStep(s, 'done'));
+        setStatus('done', 'Loaded from history');
+        toggleHistory();
+        switchTab('essay');
+        showToast('Essay loaded from history ✓');
+      } catch (e) {
+        showToast('Failed to load essay: ' + e.message);
+      }
+    }
+
+    async function deleteHistoryEssay(tid) {
+      // Animate card out
+      const card = document.getElementById(`hcard-${tid}`);
+      if (card) {
+        card.style.transition = 'all 0.25s ease';
+        card.style.opacity = '0';
+        card.style.transform = 'translateX(20px)';
+        card.style.maxHeight = card.offsetHeight + 'px';
+        setTimeout(() => {
+          card.style.maxHeight = '0';
+          card.style.margin = '0';
+          card.style.padding = '0';
+          card.style.border = 'none';
+        }, 220);
+        setTimeout(() => card.remove(), 400);
+      }
+      try {
+        await fetch(`/api/essays/${tid}`, { method: 'DELETE' });
+        showToast('Essay deleted');
+        // If drawer is now empty, show empty state
+        const list = document.getElementById('historyList');
+        if (list && list.querySelectorAll('[id^="hcard-"]').length === 0) {
+          setTimeout(() => loadHistory(), 450);
+        }
+      } catch (e) {
+        showToast('Delete failed: ' + e.message);
+      }
+    }
+  </script>
+</body>
+
+</html>
