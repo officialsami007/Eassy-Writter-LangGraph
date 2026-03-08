@@ -51,7 +51,7 @@ _graph = None
 def get_graph():
     global _graph
     if _graph is None:
-        _graph = build_graph("essay_memory.db")
+        _graph = build_graph(DB_FILE)
     return _graph
 
 
@@ -338,7 +338,10 @@ def download(thread_id: str):
 #  ESSAY HISTORY — saved to essays.json on every completion
 # ─────────────────────────────────────────────────────────────────
 
-HISTORY_FILE = "essays.json"
+# Use /app/data/ when running in Docker, otherwise local folder
+DATA_DIR     = "/app/data" if os.path.isdir("/app/data") else "."
+HISTORY_FILE = os.path.join(DATA_DIR, "essays.json")
+DB_FILE      = os.path.join(DATA_DIR, "essay_memory.db")
 
 def save_essay_to_history(thread_id: str, task: str, draft: str, revision_num: int,
                            plan: str = "", research: str = "", critique: str = ""):
@@ -437,4 +440,4 @@ if __name__ == "__main__":
     print("  Open in browser: http://localhost:5000")
     print("  Press Ctrl+C to stop")
     print("═"*50 + "\n")
-    app.run(debug=False, threaded=True, port=5000)
+    app.run(host="0.0.0.0", debug=False, threaded=True, port=5000)
