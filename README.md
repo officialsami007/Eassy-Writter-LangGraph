@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 📝 AI Essay Writer — LangGraph Multi-Agent System
 
 A production-grade multi-agent essay writing system that implements **every lesson**
@@ -197,3 +198,6 @@ User types essay topic
 | `RateLimitError` | Wait 60s and run again. Free tier has rate limits |
 | `TavilyError` | Check your TAVILY_API_KEY. If expired, research step skips gracefully |
 | `ModuleNotFoundError` | Run `pip install -r requirements.txt` again |
+=======
+# Eassy-Writter-LangGraph
+>>>>>>> b8d77dc7286de6385dea7b9bc7584b475c59b5a4
