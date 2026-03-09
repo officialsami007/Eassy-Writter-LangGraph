@@ -1,20 +1,18 @@
-# ── Web Framework ────────────────────────────────────────────────
 flask>=3.0.0
 
-# ── LangGraph (let pip resolve compatible versions) ──────────────
+# LangGraph stack
 langgraph
 langchain
 langchain-core
 langchain-community
 langchain-groq
 
-# ── SQLite persistence (separate package in langgraph 1.x) ───────
+# Checkpoint persistence
 langgraph-checkpoint-sqlite
 
-# ── FREE Search: Tavily ──────────────────────────────────────────
+#Search
 tavily-python
 
-# ── Utilities ────────────────────────────────────────────────────
 python-dotenv
 aiosqlite
 httpx
