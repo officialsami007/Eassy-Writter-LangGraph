@@ -9,7 +9,7 @@
     href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&family=Manrope:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
   <style>
-    /* ── RESET & TOKENS ─────────────────────────────────── */
+    /* RESET & TOKENS */
     *,
     *::before,
     *::after {
@@ -49,7 +49,7 @@
       line-height: 1.7;
     }
 
-    /* ── SCROLLBAR ──────────────────────────────────────── */
+    /* SCROLLBAR */
     ::-webkit-scrollbar {
       width: 4px;
     }
@@ -59,14 +59,14 @@
       border-radius: 2px;
     }
 
-    /* ── LAYOUT ─────────────────────────────────────────── */
+    /* LAYOUT */
     .app {
       display: grid;
       grid-template-rows: auto 1fr;
       min-height: 100vh;
     }
 
-    /* ── TOP BAR ────────────────────────────────────────── */
+    /* TOP BAR */
     header {
       background: var(--ink);
       color: var(--paper);
@@ -164,7 +164,7 @@
       }
     }
 
-    /* ── MAIN SPLIT ─────────────────────────────────────── */
+    /* MAIN SPLIT */
     .main {
       display: grid;
       grid-template-columns: 380px 1fr;
@@ -172,7 +172,7 @@
       overflow: hidden;
     }
 
-    /* ── LEFT PANEL ─────────────────────────────────────── */
+    /* LEFT PANEL */
     .left {
       background: var(--cream);
       border-right: 1px solid var(--mist);
@@ -181,7 +181,7 @@
       overflow: hidden;
     }
 
-    /* ── FORM AREA ──────────────────────────────────────── */
+    /* FORM AREA */
     .form-area {
       padding: 28px 28px 20px;
       border-bottom: 1px solid var(--mist);
@@ -290,7 +290,7 @@
       transform: none;
     }
 
-    /* ── PIPELINE TRACKER ───────────────────────────────── */
+    /* PIPELINE TRACKER */
     .pipeline {
       padding: 20px 28px;
       flex: 1;
@@ -409,7 +409,7 @@
       line-height: 1.5;
     }
 
-    /* ── HITL PANEL ─────────────────────────────────────── */
+    /* HITL PANEL */
     .hitl-panel {
       display: none;
       margin: 0 20px 20px;
@@ -485,7 +485,7 @@
       color: var(--ink);
     }
 
-    /* ── RIGHT PANEL ────────────────────────────────────── */
+    /* RIGHT PANEL */
     .right {
       display: grid;
       grid-template-rows: auto 1fr;
@@ -493,7 +493,7 @@
       background: var(--surface);
     }
 
-    /* ── TABS ────────────────────────────────────────────── */
+    /* TABS */
     .tabs {
       display: flex;
       border-bottom: 1px solid var(--mist);
@@ -542,7 +542,7 @@
       vertical-align: middle;
     }
 
-    /* ── TAB PANES ──────────────────────────────────────── */
+    /* TAB PANES */
     .panes {
       overflow: hidden;
       position: relative;
@@ -559,7 +559,7 @@
       display: block;
     }
 
-    /* ── WELCOME / IDLE ─────────────────────────────────── */
+    /* WELCOME / IDLE  */
     .idle-state {
       display: flex;
       flex-direction: column;
@@ -604,7 +604,7 @@
       line-height: 1.7;
     }
 
-    /* ── CONTENT CARDS ──────────────────────────────────── */
+    /* CONTENT CARD */
     .content-card {
       background: var(--cream);
       border: 1px solid var(--mist);
@@ -655,7 +655,7 @@
       font-family: 'Manrope', sans-serif;
     }
 
-    /* ── ESSAY DISPLAY ──────────────────────────────────── */
+    /* ESSAY DISPLAY */
     .essay-wrap {
       max-width: 680px;
       margin: 0 auto;
@@ -712,7 +712,7 @@
       margin-bottom: 20px;
     }
 
-    /* ── ESSAY ACTIONS ──────────────────────────────────── */
+    /* ESSAY ACTIONS */
     .essay-actions {
       display: flex;
       gap: 10px;
@@ -756,7 +756,7 @@
       color: var(--ink);
     }
 
-    /* ── CRITIQUE TAB ───────────────────────────────────── */
+    /* CRITIQUE TAB */
     .critique-text {
       font-size: 14px;
       line-height: 1.85;
@@ -765,7 +765,7 @@
       max-width: 700px;
     }
 
-    /* ── LIVE LOG ───────────────────────────────────────── */
+    /* LIVE LOG */
     .log-feed {
       font-family: 'DM Mono', monospace;
       font-size: 12px;
@@ -836,7 +836,7 @@
       font-weight: 500;
     }
 
-    /* ── EMPTY STATES ───────────────────────────────────── */
+    /* EMPTY STATE */
     .empty {
       text-align: center;
       padding: 60px 20px;
@@ -850,7 +850,7 @@
       opacity: 0.4;
     }
 
-    /* ── TOAST ──────────────────────────────────────────── */
+    /* TOAST */
     .toast {
       position: fixed;
       bottom: 24px;
@@ -873,7 +873,7 @@
       opacity: 1;
     }
 
-    /* ── RESPONSIVE ─────────────────────────────────────── */
+    /* RESPONSIVE */
     @media (max-width: 900px) {
       .main {
         grid-template-columns: 1fr;
@@ -887,7 +887,7 @@
       }
     }
 
-    /* ── PLAN RENDERED ──────────────────────────────────── */
+    /* PLAN RENDERED */
     .plan-block {
       margin-bottom: 28px;
     }
@@ -991,7 +991,7 @@
       left: 2px;
     }
 
-    /* ── RESEARCH CARDS ─────────────────────────────────── */
+    /* RESEARCH CARD */
     .research-source {
       border: 1px solid var(--mist);
       border-radius: 12px;
@@ -1065,7 +1065,7 @@
       color: #3a3630;
     }
 
-    /* ── CRITIQUE CARDS ─────────────────────────────────── */
+    /* CRITIQUE CARDS */
     .critique-summary {
       background: rgba(184, 92, 56, 0.06);
       border-left: 3px solid var(--rust);
@@ -1157,7 +1157,7 @@
       font-weight: 700;
     }
 
-    /* ── PLAN FIXES ─────────────────────────────────────── */
+    /* PLAN FIXES */
     .plan-roman-header {
       font-family: 'Instrument Serif', serif;
       font-size: 17px;
@@ -1213,7 +1213,7 @@
 <body>
   <div class="app">
 
-    <!-- HEADER -->
+    
     <header>
       <div class="logo">
         Essay<span>Writer</span>
@@ -1234,13 +1234,13 @@
       </div>
     </header>
 
-    <!-- MAIN -->
+    
     <div class="main">
 
-      <!-- LEFT: Form + Pipeline Tracker -->
+      
       <aside class="left">
 
-        <!-- Input Form -->
+        
         <div class="form-area">
           <h2>Write an <em>essay</em><br>with AI agents</h2>
 
@@ -1262,7 +1262,7 @@
           </button>
         </div>
 
-        <!-- Pipeline Steps -->
+        
         <div class="pipeline">
           <h3>Pipeline</h3>
 
@@ -1315,7 +1315,7 @@
           </div>
         </div>
 
-        <!-- Human-in-the-Loop panel -->
+        
         <div class="hitl-panel" id="hitlPanel">
           <div class="hitl-title">
             <span>👤</span> Your Review
@@ -1330,10 +1330,10 @@
 
       </aside>
 
-      <!-- RIGHT: Output Panels -->
+      
       <main class="right">
 
-        <!-- Tabs -->
+      
         <div class="tabs">
           <button class="tab active" onclick="switchTab('essay')" id="tab-essay">Essay</button>
           <button class="tab" onclick="switchTab('plan')" id="tab-plan">Plan</button>
@@ -1343,10 +1343,10 @@
           <button class="tab" onclick="switchTab('log')" id="tab-log">Live Log</button>
         </div>
 
-        <!-- Panes -->
+        
         <div class="panes">
 
-          <!-- ESSAY -->
+          
           <div class="pane active" id="pane-essay">
             <div class="idle-state" id="essayIdle">
               <div class="idle-icon">📝</div>
@@ -1374,7 +1374,7 @@
             </div>
           </div>
 
-          <!-- PLAN -->
+          
           <div class="pane" id="pane-plan">
             <div class="empty" id="planEmpty">
               <div class="empty-icon">📋</div>
@@ -1392,7 +1392,7 @@
             </div>
           </div>
 
-          <!-- RESEARCH -->
+          
           <div class="pane" id="pane-research">
             <div class="empty" id="researchEmpty">
               <div class="empty-icon">🔍</div>
@@ -1410,7 +1410,7 @@
             </div>
           </div>
 
-          <!-- CRITIQUE -->
+      
           <div class="pane" id="pane-critique">
             <div class="empty" id="critiqueEmpty">
               <div class="empty-icon">🧐</div>
@@ -1428,7 +1428,7 @@
             </div>
           </div>
 
-          <!-- LIVE LOG -->
+          
           <div class="pane" id="pane-log">
             <div class="log-feed" id="logFeed">
               <div class="empty">
@@ -1438,13 +1438,13 @@
             </div>
           </div>
 
-        </div><!-- /panes -->
+        </div>
       </main>
 
-    </div><!-- /main -->
-  </div><!-- /app -->
+    </div>
+  </div>
 
-  <!-- History Drawer -->
+  
   <div id="historyDrawer" style="
   position:fixed;top:56px;right:0;bottom:0;width:380px;
   background:var(--surface);border-left:1px solid var(--mist);
@@ -1470,16 +1470,16 @@
     </div>
     <div id="historyList" style="flex:1;overflow-y:auto;padding:12px;"></div>
   </div>
-  <!-- History overlay backdrop -->
+  
   <div id="historyBackdrop" onclick="toggleHistory()" style="
   display:none;position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:140;
 "></div>
 
-  <!-- Toast -->
+  
   <div class="toast" id="toast"></div>
 
   <script>
-    /* ── STATE ─────────────────────────────────────────── */
+    /* STATE */
     let threadId = null;
     let evtSource = null;
 
@@ -1492,14 +1492,14 @@
       final: 'Finaliser',
     };
 
-    /* ── START ─────────────────────────────────────────── */
+    /* START */
     async function startEssay() {
       const task = document.getElementById('topicInput').value.trim();
       if (!task) { showToast('Please enter an essay topic'); return; }
 
       const maxRev = parseInt(document.getElementById('maxRevInput').value) || 2;
 
-      // Reset UI
+      
       resetUI();
       setStatus('running', 'Starting…');
       document.getElementById('startBtn').disabled = true;
@@ -1525,7 +1525,7 @@
       }
     }
 
-    /* ── SSE STREAM ────────────────────────────────────── */
+    /* SSE STREAM */
     function connectSSE() {
       if (evtSource) evtSource.close();
       evtSource = new EventSource(`/api/stream/${threadId}`);
@@ -1561,7 +1561,7 @@
         if (ev.draft) { showEssay(ev.draft, ev.revision); }
         if (ev.critique) { showCritique(ev.critique); }
 
-        // Mark next step active
+        
         const next = { plan: 'research', research: 'draft', draft: 'critique', revision: 'critique', critique: 'revision' }[node];
         if (next) markStep(next, 'active');
         return;
@@ -1583,7 +1583,7 @@
       }
 
       if (t === 'resuming') {
-        // SSE already reconnected by submitFeedback/skipRevision — just log it
+        // SSE already reconnected by submitFeedback/skipRevision
         hideHITL();
         setStatus('running', ev.message || 'Resuming...');
         logEntry('system', 'system', ev.message || 'Resuming...');
@@ -1613,7 +1613,7 @@
       }
     }
 
-    /* ── HITL ──────────────────────────────────────────── */
+    // HITL
     function showHITL(rev, max) {
       document.getElementById('hitlPanel').classList.add('show');
       markStep('critique', 'hitl');
@@ -1686,7 +1686,7 @@
       }
     }
 
-    /* ── UI HELPERS ────────────────────────────────────── */
+    /* UI HELPERS */
     function switchTab(name) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
@@ -1789,7 +1789,7 @@
           continue;
         }
 
-        // ── Thesis Statement
+        // Thesis Statement
         if (/^thesis statement[:\s]/i.test(clean)) {
           html += closeSection();
           const thesis = clean.replace(/^thesis statement[:\s]*/i, '').trim();
@@ -1797,7 +1797,7 @@
           continue;
         }
 
-        // ── Roman numeral section: I. II. III. IV. V. VI. etc (with optional title)
+        // ── Roman numeral section
         const romanMatch = clean.match(/^(I{1,3}|IV|V|VI{0,3}|IX|X)[\.\)]\s*(.+)/i);
         if (romanMatch) {
           html += closeSection();
@@ -1810,7 +1810,7 @@
           continue;
         }
 
-        // ── Numbered section: "1." "2." etc as section headers (only if no roman detected)
+        // Numbered section
         const numSecMatch = clean.match(/^(\d+)\.\s+(Main Argument|Section|Introduction|Conclusion|Body|Overview).+/i);
         if (numSecMatch) {
           html += closeSection();
@@ -1822,21 +1822,21 @@
           continue;
         }
 
-        // ── "Evidence:" label line
+        // "Evidence:" label line
         if (/^evidence[:\s]*$/i.test(clean) || /^evidence to strengthen/i.test(clean)) {
           html += flushBullets();
           inEvidenceMode = true;
           continue;
         }
 
-        // ── Evidence sub-item: lines starting with + or deeply indented
+        // Evidence sub-item: lines starting with + or deeply indented
         if (inEvidenceMode || line.match(/^\+\s/) || (raw.match(/^\s{6,}/) && line.match(/^[*+\-]/))) {
           const txt = clean.replace(/^[+\-*\s]+/, '').trim();
           if (txt) evidenceBuf.push(txt);
           continue;
         }
 
-        // ── Regular bullet: * or -
+        // Regular bullet: * or -
         if (clean.match(/^[*\-]\s+/)) {
           html += flushEvidence();
           const txt = clean.replace(/^[*\-]\s+/, '').trim();
@@ -1844,7 +1844,7 @@
           continue;
         }
 
-        // ── Plain indented line (treat as bullet if inside a section)
+        // Plain indented line (treat as bullet if inside a section)
         if (raw.match(/^\s{2,}/) && sectionOpen) {
           html += flushEvidence();
           const txt = clean.replace(/^[*\-+\s]+/, '').trim();
@@ -1852,7 +1852,7 @@
           continue;
         }
 
-        // ── Everything else: paragraph or standalone text
+        // Everything else: paragraph or standalone text
         html += flushBullets() + flushEvidence();
         if (sectionOpen) {
           // treat as a bullet inside the section
@@ -1928,7 +1928,7 @@
 
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        // Numbered issue line: starts with "1." "2." etc
+        // Numbered issue line
         const numMatch = line.match(/^(\d+)\.\s+(.+)/);
         if (numMatch) {
           pastSummary = true;
@@ -2059,7 +2059,7 @@
       setTimeout(() => markStep('plan', 'active'), 100);
     });
 
-    /* ── HISTORY ────────────────────────────────────────── */
+    /* HISTORY */
     let historyOpen = false;
 
     function toggleHistory() {
