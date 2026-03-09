@@ -1,21 +1,4 @@
-"""
-app.py — Flask Web Server
-─────────────────────────
-Serves the frontend UI and exposes a streaming API for the LangGraph pipeline.
-
-Endpoints:
-  GET  /                    → serves the HTML frontend
-  POST /api/start           → starts an essay run, returns thread_id
-  GET  /api/stream/<tid>    → SSE stream of agent progress
-  POST /api/feedback/<tid>  → injects human feedback, resumes graph
-  POST /api/skip/<tid>      → skips revision, jumps to final
-  GET  /api/state/<tid>     → returns current state as JSON
-  GET  /api/download/<tid>  → download final essay as .txt
-
-Run with:  python app.py
-Then open: http://localhost:5000
-"""
-
+"""Flask app for the essay writer API and frontend."""
 import os
 import json
 import queue
@@ -28,7 +11,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Validate keys before importing heavy libs
 _missing = [k for k in ("GROQ_API_KEY", "TAVILY_API_KEY") if not os.getenv(k)]
 if _missing:
     print(f"\n❌  Missing API keys: {', '.join(_missing)}")
@@ -40,12 +22,9 @@ from graph import build_graph
 
 app = Flask(__name__)
 
-# ─────────────────────────────────────────────────────────────────
 #  In-memory store: thread_id → {graph, config, event_queue, state}
-# ─────────────────────────────────────────────────────────────────
 sessions: dict = {}
 
-# One shared graph instance (thread-safe with per-thread configs)
 _graph = None
 
 def get_graph():
@@ -54,11 +33,7 @@ def get_graph():
         _graph = build_graph(DB_FILE)
     return _graph
 
-
-# ─────────────────────────────────────────────────────────────────
 #  ROUTES
-# ─────────────────────────────────────────────────────────────────
-
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -97,7 +72,6 @@ def start():
         "human_feedback": "",
     }
 
-    # Run the graph in a background thread so Flask stays responsive
     t = threading.Thread(
         target=_run_pipeline,
         args=(thread_id, initial_state, config, q),
@@ -126,7 +100,6 @@ def _stream_run(graph, input_data, config: dict, q: queue.Queue, sess: dict):
     for event in graph.stream(input_data, config=config, stream_mode="updates"):
         for node_name, updates in event.items():
             if node_name == "__interrupt__":
-                # Graph paused — HITL moment
                 state = graph.get_state(config).values
                 q.put({
                     "type":     "hitl_pause",
@@ -137,9 +110,8 @@ def _stream_run(graph, input_data, config: dict, q: queue.Queue, sess: dict):
                     "maximum":  state.get("max_revisions", 2),
                 })
                 sess["status"] = "paused"
-                return  # exit — will be resumed via /api/feedback or /api/skip
+                return  
 
-            # Normal node completion
             state = graph.get_state(config).values
             payload = {
                 "type":     "node_complete",
@@ -148,7 +120,6 @@ def _stream_run(graph, input_data, config: dict, q: queue.Queue, sess: dict):
                 "revision": state.get("revision_num", 0),
             }
 
-            # Attach relevant output for each node type
             if node_name == "plan":
                 payload["plan"] = state.get("plan", "")
             elif node_name == "research":
@@ -161,7 +132,6 @@ def _stream_run(graph, input_data, config: dict, q: queue.Queue, sess: dict):
 
             q.put(payload)
 
-    # Graph finished naturally (hit END node)
     final = graph.get_state(config).values
     task  = final.get("task", "")
     draft = final.get("draft", "")
@@ -172,7 +142,6 @@ def _stream_run(graph, input_data, config: dict, q: queue.Queue, sess: dict):
         "task":  task,
     })
     sess["status"] = "complete"
-    # Save to history file so user can revisit later
     try:
         tid = config.get("configurable", {}).get("thread_id", "unknown")
         save_essay_to_history(tid, task, draft, rev,
@@ -228,7 +197,6 @@ def feedback(thread_id: str):
     human_text = (data.get("feedback") or "").strip()
 
     if human_text:
-        # Lesson 5: update_state() — inject human feedback into the paused graph
         graph.update_state(
             config,
             {"human_feedback": human_text},
@@ -238,7 +206,6 @@ def feedback(thread_id: str):
     sess["status"] = "running"
     q.put({"type": "resuming", "message": "Resuming with your feedback..."})
 
-    # Resume the graph in a background thread
     t = threading.Thread(
         target=_resume_pipeline,
         args=(thread_id, config, q, sess),
@@ -260,7 +227,6 @@ def skip(thread_id: str):
     graph  = get_graph()
     q      = sess["queue"]
 
-    # Force max_revisions = current revision so should_revise() routes to "final"
     state = graph.get_state(config).values
     graph.update_state(
         config,
@@ -334,11 +300,8 @@ def download(thread_id: str):
     return jsonify({"error": "No essay yet"}), 404
 
 
-# ─────────────────────────────────────────────────────────────────
-#  ESSAY HISTORY — saved to essays.json on every completion
-# ─────────────────────────────────────────────────────────────────
+#  ESSAY HISTORY
 
-# Use /app/data/ when running in Docker, otherwise local folder
 DATA_DIR     = "/app/data" if os.path.isdir("/app/data") else "."
 HISTORY_FILE = os.path.join(DATA_DIR, "essays.json")
 DB_FILE      = os.path.join(DATA_DIR, "essay_memory.db")
@@ -365,7 +328,6 @@ def save_essay_to_history(thread_id: str, task: str, draft: str, revision_num: i
         "word_count":   len(draft.split()),
         "saved_at":     datetime.now().strftime("%Y-%m-%d %H:%M"),
     }
-    # Update if exists, else prepend
     for i, item in enumerate(history):
         if item["thread_id"] == thread_id:
             history[i] = entry
@@ -385,7 +347,6 @@ def list_essays():
         return jsonify([])
     try:
         history = _json.loads(open(HISTORY_FILE).read())
-        # Return summary (no full draft text to keep it light)
         summaries = [{
             "thread_id":    e["thread_id"],
             "task":         e["task"],
@@ -429,9 +390,7 @@ def get_essay(thread_id: str):
         return jsonify({"error": "read error"}), 500
 
 
-# ─────────────────────────────────────────────────────────────────
 #  ENTRY POINT
-# ─────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     print("\n" + "═"*50)
